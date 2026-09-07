@@ -1,0 +1,65 @@
+name: Build Cruxerra Windows App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Python dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Django executable
+        working-directory: backend
+        run: |
+          pyinstaller --noconfirm --clean --onefile --name CruxerraBackend run_server.py
+
+      - name: Verify Django executable
+        working-directory: backend
+        run: |
+          dir dist
+          if (!(Test-Path "dist/CruxerraBackend.exe")) {
+            Write-Error "CruxerraBackend.exe was not created!"
+            exit 1
+          }
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build and package Electron app
+        working-directory: frontend
+        run: npm run build
+
+      - name: Verify packaged backend
+        working-directory: frontend
+        run: |
+          if (!(Test-Path "release/win-unpacked/resources/backend/CruxerraBackend.exe")) {
+            Write-Error "CruxerraBackend.exe was not included in the Electron package!"
+            exit 1
+          }
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cruxerra-Windows
+          path: frontend/release/*.exe

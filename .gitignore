@@ -1,0 +1,15 @@
+.DS_Store
+.venv/
+node_modules/
+backend/.env
+backend/db.sqlite3
+backend/files/
+__pycache__/
+*.py[cod]
+backend/build/
+backend/dist/
+backend/*.spec
+backend/*.exe
+frontend/dist/
+frontend/release/
+Cruxerra.exe

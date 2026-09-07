@@ -1,0 +1,269 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:        #d4af37;
+  --gold-dim:    rgba(212, 175, 55, 0.12);
+  --gold-glow:   rgba(212, 175, 55, 0.25);
+  --bg:          #0e0e0e;
+  --surface-1:   #161616;
+  --surface-2:   #1e1e1e;
+  --surface-3:   #272727;
+  --border:      rgba(255, 255, 255, 0.06);
+  --border-gold: rgba(212, 175, 55, 0.35);
+  --text-1:      #f0f0f0;
+  --text-2:      #888;
+  --text-3:      #555;
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'Syne', sans-serif;
+}
+
+/* ── Layout ── */
+.mainLayout {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 260px;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border-gold);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* glow orb in sidebar */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: -80px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* space between button and text */
+  margin-bottom: 8%;
+}
+
+.fileRow p {
+  margin: 0;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadButton {
+  padding: 10px 20px;
+  background: transparent;
+  color: white;
+  border-radius: 8px;
+  border: 2px dotted var(--border-gold);
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.uploadButton:hover {
+  opacity: 0.9;
+}
+
+.sidebar h1 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.sidebar small {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+/* ── Nav ── */
+nav {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+nav a, nav button {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+nav a:hover, nav button:hover {
+  color: var(--gold);
+}
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse 50% 40% at 80% 10%, rgba(212,175,55,0.04) 0%, transparent 60%),
+    var(--bg);
+}
+
+/* ── Upload Card ── */
+.upload-card {
+  width: 100%;
+  max-width: 500px;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 24px 60px rgba(0,0,0,0.5);
+  padding: 2.25rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* top shimmer line */
+.upload-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+
+.upload-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(212,175,55,0.1) inset,
+    0 32px 80px rgba(0,0,0,0.6),
+    0 0 40px rgba(212,175,55,0.05);
+}
+
+.upload-card h5 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+}
+
+.upload-card h5 span {
+  color: var(--gold);
+}
+
+h2 {
+  font-family: var(--font-body);
+}
+input:not([type="file"]):focus {
+  border-color: var(--border-gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+/* ── Button ── */
+.btn-gradient {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(90deg, #b8962e, #d4af37, #c9a32c);
+  background-size: 200% auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #0e0e0e;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--gold-glow);
+  transition: background-position 0.4s ease, transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-gradient:hover {
+  background-position: right center;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(212,175,55,0.4);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ── Profile Image ── */
+.profile {
+  height: 7rem;
+  width: 7rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-gold);
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(212,175,55,0.15);
+  transition: box-shadow 0.25s;
+}
+
+.profile:hover {
+  box-shadow: 0 0 30px rgba(212,175,55,0.3);
+}
+
+/* ── Viga display class ── */
+.viga-regular {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3rem, 10vw, 8rem);
+  color: var(--gold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-1); }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-gold); }

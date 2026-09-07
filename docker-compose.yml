@@ -1,0 +1,39 @@
+services:
+  db: # hostname
+    image: postgres:15 # create a container running PSQL 15
+    environment: # environmental variables
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cruxerra
+    volumes: # stores the database files somewhere permanent
+      - db_data:/var/lib/postgresql/data
+    ports: # port where application can connect to PSQL through
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ./backend/.env              # create from .env.example, populate secrets locally
+    depends_on: # start the database before starting Django
+      - db
+    volumes:
+      - ./backend:/app              # mount code for live reload
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+
+volumes:
+  db_data:
