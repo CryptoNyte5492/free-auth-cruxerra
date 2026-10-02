@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 LOCAL_USERNAME = "local-coach"
 LOCAL_EMAIL = "local-coach@cruxerra.local"
@@ -28,7 +29,6 @@ class UploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        all_races = []
         uploaded_file_ids = []
         files = request.FILES.getlist("file")
 
@@ -38,62 +38,80 @@ class UploadView(APIView):
         user = get_local_user()
 
         try:
-            for f in files:
-                stream = io.StringIO(f.read().decode("utf-8"))
-                f.seek(0)
-                reader = csv.DictReader(stream)
-
-                file_name = f.name
-                filtered_file = UploadedFile.objects.filter(user=user, name=file_name)
-
-                if not filtered_file.exists():
-                    u_file = UploadedFile.objects.create(
-                        user=user,
-                        file=f,
-                        name=file_name
-                    )
-                else:
-                    u_file = filtered_file.first()
-
-                uploaded_file_ids.append(u_file.id)
-
-                for row in reader:
-                    cleaned = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
-
-                    exists = Race.objects.filter(
-                        user=user,
-                        uploaded_file=u_file,
-                        name=cleaned['Athlete'],
-                        event=cleaned['Event'],
-                        date=cleaned['Date'],
-                        distance=int(cleaned['Distance (m)']),
-                    ).exists()
-
-                    if not exists:
-                        all_races.append(
-                            Race(
-                                user=user,
-                                uploaded_file=u_file,
-                                name=cleaned.get('Athlete', '').strip(),
-                                event=cleaned.get('Event', '').strip(),
-                                date=cleaned.get('Date'),
-                                distance=safe_int(cleaned.get('Distance (m)')),
-                                time_sec=parse_time_to_seconds(cleaned.get('Time', '0:00')),
-                                elevation=safe_int(cleaned.get('Elevation Gain')),
-                                humidity=safe_int(cleaned.get('Humidity (%)')),
-                                surface=cleaned.get('Surface', '').strip(),
-                                temperature=safe_int(cleaned.get('Temperature (F)')),
-                            )
+            with transaction.atomic():
+                for f in files:
+                    stream = io.StringIO(f.read().decode("utf-8-sig"))
+                    f.seek(0)
+                    reader = csv.DictReader(stream)
+                    required_columns = {"Athlete", "Event", "Date", "Distance (m)", "Time"}
+                    headers = {header.strip() for header in (reader.fieldnames or []) if header}
+                    missing_columns = sorted(required_columns - headers)
+                    if missing_columns:
+                        raise ValueError(
+                            f"{f.name}: missing required CSV column(s): {', '.join(missing_columns)}"
                         )
 
-            if all_races:
-                Race.objects.bulk_create(all_races)
+                    parsed_rows = []
+                    for row_number, row in enumerate(reader, start=2):
+                        cleaned = {
+                            (key.strip() if key else ""): (value.strip() if isinstance(value, str) else value)
+                            for key, value in row.items()
+                        }
+                        athlete = cleaned.get("Athlete") or ""
+                        event = cleaned.get("Event") or ""
+                        date = cleaned.get("Date") or ""
+                        distance = safe_int(cleaned.get("Distance (m)"), None)
+                        if not athlete or not event or not date or distance is None or distance <= 0:
+                            raise ValueError(
+                                f"{f.name}, row {row_number}: Athlete, Event, Date, and a positive Distance (m) are required."
+                            )
+                        try:
+                            time_sec = parse_time_to_seconds(cleaned.get("Time", ""))
+                        except (TypeError, ValueError) as error:
+                            raise ValueError(
+                                f"{f.name}, row {row_number}: Time must use minutes:seconds format."
+                            ) from error
+                        parsed_rows.append((cleaned, athlete, event, date, distance, time_sec))
+
+                    u_file = UploadedFile.objects.filter(user=user, name=f.name).first()
+                    if u_file is None:
+                        u_file = UploadedFile.objects.create(user=user, file=f, name=f.name)
+                    uploaded_file_ids.append(u_file.id)
+
+                    new_races = []
+                    for cleaned, athlete, event, date, distance, time_sec in parsed_rows:
+                        exists = Race.objects.filter(
+                            user=user,
+                            uploaded_file=u_file,
+                            name=athlete,
+                            event=event,
+                            date=date,
+                            distance=distance,
+                        ).exists()
+                        if not exists:
+                            new_races.append(Race(
+                                user=user,
+                                uploaded_file=u_file,
+                                name=athlete,
+                                event=event,
+                                date=date,
+                                distance=distance,
+                                time_sec=time_sec,
+                                elevation=safe_int(cleaned.get("Elevation Gain")),
+                                humidity=safe_int(cleaned.get("Humidity (%)")),
+                                surface=cleaned.get("Surface", ""),
+                                temperature=safe_int(cleaned.get("Temperature (F)")),
+                            ))
+                    if new_races:
+                        Race.objects.bulk_create(new_races)
 
             return Response({
                 "message": "Upload successful",
                 "file_id": uploaded_file_ids
             }, status=status.HTTP_201_CREATED)
 
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
