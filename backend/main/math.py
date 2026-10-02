@@ -358,11 +358,11 @@ def average_ideal_for_distance(runners, athlete, distance):
     for r in runners:
         try:
             if r.name.strip() == athlete.strip() and to_int_safe(r.distance) == distance:
-                total_sec = total_sec = to_float_safe(r.time_sec)
+                total_sec = to_float_safe(r.time_sec)
                 temp = to_float_safe(r.temperature, 60)
                 hum = to_float_safe(r.humidity, 60)
                 elev = to_float_safe(r.elevation, 0)
-                normal = normalize_time(total_sec, distance, temp, hum, elev)
+                normal = normalize_time(None, total_sec, temp, hum, elev, r.surface)
                 if normal is not None:
                     times.append(normal)
         except Exception:
@@ -412,7 +412,7 @@ def cumulative_averages(runners, athlete, distance):
             temp = to_float_safe(r.temperature, 60)
             hum = to_float_safe(r.humidity, 60)
             elev = to_float_safe(r.elevation, 0)
-            normal = normalize_time(total_sec, distance, temp, hum, elev)
+            normal = normalize_time(None, total_sec, temp, hum, elev, r.surface)
 
             if total_sec is None or normal is None:
                 continue
