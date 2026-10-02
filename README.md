@@ -8,7 +8,7 @@ server or PostgreSQL installation is needed.
 ## Build a Windows installer
 
 Run these commands on a Windows computer, from a fresh copy of this project.
-Install current Python 3 and Node.js first.
+Install Python 3.12 and Node.js 22.13 or newer in the 22.x line first.
 
 ```powershell
 cd backend
